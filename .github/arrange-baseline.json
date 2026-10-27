@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "note": "Ratchet baseline: CI fails only when a file/rule count grows.",
+  "total": 98,
+  "counts": {
+    "src/impedance.c::Semantic Consistency Law (Control flow: single-statement braces)": 20,
+    "src/impedance.c::Semantic Consistency Law (Control flow: statement separation)": 68,
+    "src/main.c::Semantic Consistency Law (Control flow: single-statement braces)": 1,
+    "src/main.c::Semantic Consistency Law (Control flow: statement separation)": 9
+  }
+}

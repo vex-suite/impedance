@@ -20,7 +20,7 @@ a smoke test. It includes Vexspoke headers (`audio/audio_hal.h`,
 mixing beyond the shell, and persistence.
 
 **Proven:** nothing — the shell's files carry no executed owner test in
-`../../gist/test-checklist.md`; no platform or audio output is proven.
+`../../../metadata/gists/test-checklist.md`; no platform or audio output is proven.
 
 ## Architecture
 
