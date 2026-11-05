@@ -1,8 +1,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include "impedance.h"
-#include "annotation/definition.h"
-#include "annotation/overview.h"
+#include "annotation/annotation.h"
 
 ;;DEFINITION
 /** The Impedance executable entry point is an offline smoke probe: initialize
