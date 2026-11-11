@@ -18,20 +18,20 @@
 /** ========================================================================
  * CLASS: Impedance (src/impedance.c)
  * STRUCT FIELDS (Mirroring impedance.h)
- * double sample_rate             admitted render sample rate
- * uint32_t channels              configured output channel count
- * float master_volume            mixer output gain
+ * d64 sample_rate             admitted render sample rate
+ * u32 channels              configured output channel count
+ * f32 master_volume            mixer output gain
  * ImpedanceTrack tracks[16]      fixed inline track/voice records
- * uint32_t track_count           initialized track prefix length
+ * u32 track_count           initialized track prefix length
  * AudioHal *hal_engine           owned live audio engine when started
  * FUNCTION REGISTRY
- * Lifecycle: bool Impedance_init(double sample_rate,uint32_t channels,
+ * Lifecycle: bool Impedance_init(d64 sample_rate,u32 channels,
  *   Impedance *daw), void Impedance_destroy(Impedance *daw)
- * Mixer: uint32_t Impedance_add_track(const char *name,ImpedanceComputeMode mode,
+ * Mixer: u32 Impedance_add_track(const char *name,ImpedanceComputeMode mode,
  *   Impedance *daw); bool Impedance_set_track_volume/pan/scratch_speed(...)
  * Notes/render: void Impedance_note_on/off(...),
- *   void Impedance_render(Impedance *daw,float *interleaved_out,
- *   uint32_t frames,uint32_t channels)
+ *   void Impedance_render(Impedance *daw,f32 *interleaved_out,
+ *   u32 frames,u32 channels)
  * Live lifecycle: bool Impedance_start_live(Impedance *daw),
  *   void Impedance_stop_live(Impedance *daw)
  * Private helper: impedance_hal_callback forwards device output to render.
@@ -44,9 +44,9 @@
 
 // Forward audio-device output requests to the DAW renderer when its context exists.
 static void impedance_hal_callback(
-    float *interleaved_output,
-    uint32_t frame_count,
-    uint32_t channels,
+    f32 *interleaved_output,
+    u32 frame_count,
+    u32 channels,
     void *user_data
 ) {
     Impedance *daw = (Impedance*) user_data;
@@ -56,7 +56,7 @@ static void impedance_hal_callback(
 }
 
 // Initialize the mixer state, substituting default sample rate and channel count when invalid.
-bool Impedance_init(double sample_rate, uint32_t channels, Impedance *daw) {
+bool Impedance_init(d64 sample_rate, u32 channels, Impedance *daw) {
     if (!daw) {
         return false;
     }
@@ -81,12 +81,12 @@ void Impedance_destroy(Impedance *daw) {
 }
 
 // Add an initialized track and return its index, or the sentinel when the mixer is full.
-uint32_t Impedance_add_track(const char *name, ImpedanceComputeMode mode, Impedance *daw) {
+u32 Impedance_add_track(const char *name, ImpedanceComputeMode mode, Impedance *daw) {
     if (!daw || (*daw).track_count >= IMPEDANCE_MAX_TRACKS) {
         return 0xFFFFFFFFu;
     }
 
-    uint32_t idx = (*daw).track_count++;
+    u32 idx = (*daw).track_count++;
     ImpedanceTrack *track = &(*daw).tracks[idx];
 
     (*track).id = idx;
@@ -99,7 +99,7 @@ uint32_t Impedance_add_track(const char *name, ImpedanceComputeMode mode, Impeda
     (*track).compute_mode = mode;
     (*track).active_voices = 0;
 
-    for (uint32_t v = 0; v < IMPEDANCE_MAX_VOICES; v++) {
+    for (u32 v = 0; v < IMPEDANCE_MAX_VOICES; v++) {
         (*track).voices[v].active = false;
         (*track).voices[v].midi_note = 0;
         (*track).voices[v].frequency_hz = 0.0f;
@@ -113,7 +113,7 @@ uint32_t Impedance_add_track(const char *name, ImpedanceComputeMode mode, Impeda
 }
 
 // Set a track's nonnegative volume when the requested index is active.
-bool Impedance_set_track_volume(uint32_t track_idx, float volume, Impedance *daw) {
+bool Impedance_set_track_volume(u32 track_idx, f32 volume, Impedance *daw) {
     if (!daw || track_idx >= (*daw).track_count) {
         return false;
     }
@@ -122,7 +122,7 @@ bool Impedance_set_track_volume(uint32_t track_idx, float volume, Impedance *daw
 }
 
 // Set a track's pan after clamping it to the supported left-to-right range.
-bool Impedance_set_track_pan(uint32_t track_idx, float pan, Impedance *daw) {
+bool Impedance_set_track_pan(u32 track_idx, f32 pan, Impedance *daw) {
     if (!daw || track_idx >= (*daw).track_count) {
         return false;
     }
@@ -137,7 +137,7 @@ bool Impedance_set_track_pan(uint32_t track_idx, float pan, Impedance *daw) {
 }
 
 // Set the playback-speed multiplier for an active track.
-bool Impedance_set_track_scratch_speed(uint32_t track_idx, float speed, Impedance *daw) {
+bool Impedance_set_track_scratch_speed(u32 track_idx, f32 speed, Impedance *daw) {
     if (!daw || track_idx >= (*daw).track_count) {
         return false;
     }
@@ -146,22 +146,22 @@ bool Impedance_set_track_scratch_speed(uint32_t track_idx, float speed, Impedanc
 }
 
 // Start the first available voice on a track for the requested MIDI note.
-void Impedance_note_on(uint32_t track_idx, uint8_t midi_note, float velocity, Impedance *daw) {
+void Impedance_note_on(u32 track_idx, u8 midi_note, f32 velocity, Impedance *daw) {
     if (!daw || track_idx >= (*daw).track_count) {
         return;
     }
 
     ImpedanceTrack *track = &(*daw).tracks[track_idx];
-    float freq = PianoKey_equal_temperament_hz(midi_note);
+    f32 freq = PianoKey_equal_temperament_hz(midi_note);
 
-    for (uint32_t v = 0; v < IMPEDANCE_MAX_VOICES; v++) {
+    for (u32 v = 0; v < IMPEDANCE_MAX_VOICES; v++) {
         if (!(*track).voices[v].active) {
             (*track).voices[v].active = true;
             (*track).voices[v].midi_note = midi_note;
             (*track).voices[v].frequency_hz = freq;
             (*track).voices[v].velocity = velocity;
             (*track).voices[v].phase = 0.0f;
-            (*track).voices[v].phase_increment = (float) ((TWO_PI * freq) / (*daw).sample_rate);
+            (*track).voices[v].phase_increment = (f32) ((TWO_PI * freq) / (*daw).sample_rate);
             (*track).voices[v].gain = velocity;
             (*track).active_voices++;
             return;
@@ -170,13 +170,13 @@ void Impedance_note_on(uint32_t track_idx, uint8_t midi_note, float velocity, Im
 }
 
 // Deactivate active voices matching the MIDI note on the selected track.
-void Impedance_note_off(uint32_t track_idx, uint8_t midi_note, Impedance *daw) {
+void Impedance_note_off(u32 track_idx, u8 midi_note, Impedance *daw) {
     if (!daw || track_idx >= (*daw).track_count) {
         return;
     }
 
     ImpedanceTrack *track = &(*daw).tracks[track_idx];
-    for (uint32_t v = 0; v < IMPEDANCE_MAX_VOICES; v++) {
+    for (u32 v = 0; v < IMPEDANCE_MAX_VOICES; v++) {
         if ((*track).voices[v].active && (*track).voices[v].midi_note == midi_note) {
             (*track).voices[v].active = false;
             if ((*track).active_voices > 0) {
@@ -187,23 +187,23 @@ void Impedance_note_off(uint32_t track_idx, uint8_t midi_note, Impedance *daw) {
 }
 
 // Clear and mix active, unmuted voices into the caller's interleaved output buffer.
-void Impedance_render(Impedance *daw, float *interleaved_out, uint32_t frames, uint32_t channels) {
+void Impedance_render(Impedance *daw, f32 *interleaved_out, u32 frames, u32 channels) {
     if (!daw || !interleaved_out || frames == 0 || channels == 0) {
         return;
     }
 
-    size_t total_samples = (size_t) frames * channels;
-    memset(interleaved_out, 0, total_samples * sizeof(float));
+    bytes total_samples = (bytes) frames * channels;
+    memset(interleaved_out, 0, total_samples * sizeof(f32));
 
     bool any_solo = false;
-    for (uint32_t t = 0; t < (*daw).track_count; t++) {
+    for (u32 t = 0; t < (*daw).track_count; t++) {
         if ((*daw).tracks[t].solo) {
             any_solo = true;
             break;
         }
     }
 
-    for (uint32_t t = 0; t < (*daw).track_count; t++) {
+    for (u32 t = 0; t < (*daw).track_count; t++) {
         ImpedanceTrack *track = &(*daw).tracks[t];
         if ((*track).muted) {
             continue;
@@ -212,29 +212,29 @@ void Impedance_render(Impedance *daw, float *interleaved_out, uint32_t frames, u
             continue;
         }
 
-        float pan = (*track).pan;
-        float left_gain = 0.7071f * (1.0f - pan);
-        float right_gain = 0.7071f * (1.0f + pan);
-        float track_vol = (*track).volume * (*daw).master_volume;
-        float speed = (*track).speed_multiplier;
+        f32 pan = (*track).pan;
+        f32 left_gain = 0.7071f * (1.0f - pan);
+        f32 right_gain = 0.7071f * (1.0f + pan);
+        f32 track_vol = (*track).volume * (*daw).master_volume;
+        f32 speed = (*track).speed_multiplier;
 
-        for (uint32_t v = 0; v < IMPEDANCE_MAX_VOICES; v++) {
+        for (u32 v = 0; v < IMPEDANCE_MAX_VOICES; v++) {
             ImpedanceVoice *voice = &(*track).voices[v];
             if (!(*voice).active) {
                 continue;
             }
 
-            float phase = (*voice).phase;
-            float inc = (*voice).phase_increment * speed;
-            float voice_gain = (*voice).gain * track_vol;
+            f32 phase = (*voice).phase;
+            f32 inc = (*voice).phase_increment * speed;
+            f32 voice_gain = (*voice).gain * track_vol;
 
-            for (uint32_t f = 0; f < frames; f++) {
-                float sample = sinf(phase) * voice_gain;
+            for (u32 f = 0; f < frames; f++) {
+                f32 sample = sinf(phase) * voice_gain;
                 phase += inc;
-                if (phase > (float) TWO_PI) {
-                    phase -= (float) TWO_PI;
+                if (phase > (f32) TWO_PI) {
+                    phase -= (f32) TWO_PI;
                 } else if (phase < 0.0f) {
-                    phase += (float) TWO_PI;
+                    phase += (f32) TWO_PI;
                 }
 
                 if (channels == 1) {

@@ -29,8 +29,8 @@ int main(void) {
         return 1;
     }
 
-    uint32_t track0 = Impedance_add_track("Synth Lead", IMPEDANCE_COMPUTE_CPU, &daw);
-    uint32_t track1 = Impedance_add_track("Turntable Scratch Deck", IMPEDANCE_COMPUTE_CPU, &daw);
+    u32 track0 = Impedance_add_track("Synth Lead", IMPEDANCE_COMPUTE_CPU, &daw);
+    u32 track1 = Impedance_add_track("Turntable Scratch Deck", IMPEDANCE_COMPUTE_CPU, &daw);
 
     printf("[Impedance DAW] Created tracks: %u, %u\n", track0, track1);
 
@@ -42,12 +42,12 @@ int main(void) {
     Impedance_set_track_scratch_speed(track1, 1.2f, &daw);
 
     // Render 512 frames offline to test DSP buffer rendering
-    float buffer[1024];
+    f32 buffer[1024];
     Impedance_render(&daw, buffer, 512, 2);
 
-    float max_sample = 0.0f;
+    f32 max_sample = 0.0f;
     for (int i = 0; i < 1024; i++) {
-        float abs_val = (buffer[i] < 0.0f) ? -buffer[i] : buffer[i];
+        f32 abs_val = (buffer[i] < 0.0f) ? -buffer[i] : buffer[i];
         if (abs_val > max_sample) {
             max_sample = abs_val;
         }
