@@ -1,10 +1,7 @@
 #ifndef IMPEDANCE_H
 #define IMPEDANCE_H
 
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
-
+#include "vex.h"
 #include "audio/audio_hal.h"
 #include "input/piano_key.h"
 #include "input/turntable.h"
@@ -54,20 +51,20 @@ typedef struct Impedance {
 } Impedance;
 
 bool Impedance_init(d64 sample_rate, u32 channels, Impedance *daw);
-void Impedance_destroy(Impedance *daw);
+fn Impedance_destroy(Impedance *daw);
 
 u32 Impedance_add_track(const char *name, ImpedanceComputeMode mode, Impedance *daw);
 bool Impedance_set_track_volume(u32 track_idx, f32 volume, Impedance *daw);
 bool Impedance_set_track_pan(u32 track_idx, f32 pan, Impedance *daw);
 bool Impedance_set_track_scratch_speed(u32 track_idx, f32 speed, Impedance *daw);
 
-void Impedance_note_on(u32 track_idx, u8 midi_note, f32 velocity, Impedance *daw);
-void Impedance_note_off(u32 track_idx, u8 midi_note, Impedance *daw);
+fn Impedance_note_on(u32 track_idx, u8 midi_note, f32 velocity, Impedance *daw);
+fn Impedance_note_off(u32 track_idx, u8 midi_note, Impedance *daw);
 
-void Impedance_render(Impedance *daw, f32 *interleaved_out, u32 frames, u32 channels);
+fn Impedance_render(Impedance *daw, f32 *interleaved_out, u32 frames, u32 channels);
 
 bool Impedance_start_live(Impedance *daw);
-void Impedance_stop_live(Impedance *daw);
+fn Impedance_stop_live(Impedance *daw);
 
 #ifdef __cplusplus
 }

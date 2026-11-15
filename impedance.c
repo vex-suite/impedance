@@ -26,14 +26,14 @@
  * AudioHal *hal_engine           owned live audio engine when started
  * FUNCTION REGISTRY
  * Lifecycle: bool Impedance_init(d64 sample_rate,u32 channels,
- *   Impedance *daw), void Impedance_destroy(Impedance *daw)
+ *   Impedance *daw), fn Impedance_destroy(Impedance *daw)
  * Mixer: u32 Impedance_add_track(const char *name,ImpedanceComputeMode mode,
  *   Impedance *daw); bool Impedance_set_track_volume/pan/scratch_speed(...)
- * Notes/render: void Impedance_note_on/off(...),
- *   void Impedance_render(Impedance *daw,f32 *interleaved_out,
+ * Notes/render: fn Impedance_note_on/off(...),
+ *   fn Impedance_render(Impedance *daw,f32 *interleaved_out,
  *   u32 frames,u32 channels)
  * Live lifecycle: bool Impedance_start_live(Impedance *daw),
- *   void Impedance_stop_live(Impedance *daw)
+ *   fn Impedance_stop_live(Impedance *daw)
  * Private helper: impedance_hal_callback forwards device output to render.
  * Ownership and failure contract:
  * Track and voice storage is inline and bounded by the declared track/voice
@@ -43,11 +43,11 @@
  * ======================================================================== */
 
 // Forward audio-device output requests to the DAW renderer when its context exists.
-static void impedance_hal_callback(
+static fn impedance_hal_callback(
     f32 *interleaved_output,
     u32 frame_count,
     u32 channels,
-    void *user_data
+    any user_data
 ) {
     Impedance *daw = (Impedance*) user_data;
     if (daw) {
@@ -72,7 +72,7 @@ bool Impedance_init(d64 sample_rate, u32 channels, Impedance *daw) {
 }
 
 // Stop live audio and clear the active track count before releasing the mixer state.
-void Impedance_destroy(Impedance *daw) {
+fn Impedance_destroy(Impedance *daw) {
     if (!daw) {
         return;
     }
@@ -146,7 +146,7 @@ bool Impedance_set_track_scratch_speed(u32 track_idx, f32 speed, Impedance *daw)
 }
 
 // Start the first available voice on a track for the requested MIDI note.
-void Impedance_note_on(u32 track_idx, u8 midi_note, f32 velocity, Impedance *daw) {
+fn Impedance_note_on(u32 track_idx, u8 midi_note, f32 velocity, Impedance *daw) {
     if (!daw || track_idx >= (*daw).track_count) {
         return;
     }
@@ -170,7 +170,7 @@ void Impedance_note_on(u32 track_idx, u8 midi_note, f32 velocity, Impedance *daw
 }
 
 // Deactivate active voices matching the MIDI note on the selected track.
-void Impedance_note_off(u32 track_idx, u8 midi_note, Impedance *daw) {
+fn Impedance_note_off(u32 track_idx, u8 midi_note, Impedance *daw) {
     if (!daw || track_idx >= (*daw).track_count) {
         return;
     }
@@ -187,7 +187,7 @@ void Impedance_note_off(u32 track_idx, u8 midi_note, Impedance *daw) {
 }
 
 // Clear and mix active, unmuted voices into the caller's interleaved output buffer.
-void Impedance_render(Impedance *daw, f32 *interleaved_out, u32 frames, u32 channels) {
+fn Impedance_render(Impedance *daw, f32 *interleaved_out, u32 frames, u32 channels) {
     if (!daw || !interleaved_out || frames == 0 || channels == 0) {
         return;
     }
@@ -259,7 +259,7 @@ bool Impedance_start_live(Impedance *daw) {
         return true;
     }
 
-    AudioHalConfig cfg = AudioHalConfig(impedance_hal_callback, (void*) daw);
+    AudioHalConfig cfg = AudioHalConfig(impedance_hal_callback, (any) daw);
     AudioHalConfig_set_sample_rate(&cfg, (*daw).sample_rate);
     AudioHalConfig_set_channels(&cfg, (*daw).channels);
     AudioHalConfig_set_buffer_frames(&cfg, 256);
@@ -278,7 +278,7 @@ bool Impedance_start_live(Impedance *daw) {
 }
 
 // Stop and destroy the live audio device, if one is attached.
-void Impedance_stop_live(Impedance *daw) {
+fn Impedance_stop_live(Impedance *daw) {
     if (!daw || !(*daw).hal_engine) {
         return;
     }

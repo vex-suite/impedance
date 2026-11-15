@@ -12,7 +12,7 @@
 /** ========================================================================
  * MODULE: impedance/src/main.c
  * FUNCTION REGISTRY
- * Entry point: int main(void)
+ * Entry point: int main()
  * Contract: all mixer state is local to main; initialization failure exits
  * nonzero, successful construction is destroyed before normal return. The
  * fixed sample count is this smoke probe's workload, not a configurable runtime
@@ -20,7 +20,7 @@
  * ======================================================================== */
 
 // Run a short offline mixer smoke test, then release the initialized DAW state.
-int main(void) {
+int main() {
     printf("[Impedance DAW] Initializing GPU/CPU Hybrid DAW...\n");
 
     Impedance daw;
